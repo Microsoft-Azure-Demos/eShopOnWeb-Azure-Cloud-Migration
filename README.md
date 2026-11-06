@@ -198,30 +198,3 @@ docker images
 # List persistent volumes
 docker volume ls
 ```
-
-## Future development
-
-The next development milestones are:
-
-1. Publish reusable application images to Docker Hub.
-2. Publish the source code to GitHub.
-3. Update Docker Compose to pull the published images.
-4. Deploy the application to Microsoft Azure.
-5. Automate infrastructure provisioning using Terraform.
-6. Implement CI/CD pipelines for automated image builds and deployments.
-
-## Learning objectives
-
-This project is part of a practical Cloud and DevOps portfolio, focusing on:
-
-- Containerization of multi-service applications.
-- Docker networking and service discovery.
-- Persistent storage and database management.
-- Environment-based configuration and secrets management.
-- Reusable container images and image versioning.
-- Cloud deployment and Infrastructure as Code.
-- CI/CD automation.
-
----
-
-**Project status:** Local Docker Compose environment running successfully. Docker Hub publication and GitHub release are the next milestones.
