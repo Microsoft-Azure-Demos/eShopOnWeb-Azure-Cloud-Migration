@@ -2,11 +2,13 @@
 
 A containerized e-commerce application based on [NimblePros/eShopOnWeb](https://github.com/NimblePros/eShopOnWeb).
 
-This project demonstrates how to package a multi-service .NET application using Docker and Docker Compose, manage configuration through environment variables, persist database data using Docker volumes, and prepare reusable images for deployment to cloud platforms such as Microsoft Azure.
+This project demonstrates how to containerize a multi-service .NET application using Docker, publish reusable application images to Docker Hub, orchestrate services with Docker Compose, manage configuration through environment variables, and persist database data using Docker volumes.
+
+The project also serves as a foundation for a cloud deployment on Microsoft Azure.
 
 ## Architecture
 
-The application consists of four Docker services:
+The application consists of four Docker services, orchestrated through a single Docker Compose configuration.
 
 | Service | Technology | Purpose | Local access |
 |---|---|---|---|
@@ -18,26 +20,30 @@ The application consists of four Docker services:
 ### Architecture overview
 
 ```text
-                 Browser
-                    |
-                    v
-             Web MVC :5106
-                    |
-                    v
-             Public API :5200
-                    |
-                    v
-              SQL Server
-                 :1433
+                    Browser
+                       |
+                       v
+                Web MVC :5106
+                Docker Image
+                       |
+                       v
+                Public API :5200
+                Docker Image
+                       |
+                       v
+                SQL Server :1433
+                Persistent Volume
 
-          Web MVC / Public API
-                    |
-                    v
-                  Seq
-                 :5341
+             Web MVC / Public API
+                       |
+                       v
+                    Seq :5341
+                Persistent Volume
 ```
 
-All services communicate through the Docker Compose network.
+All services communicate through a dedicated Docker Compose network.
+
+The Web MVC and Public API services use separately published Docker images. Docker Compose manages their deployment, networking, configuration, and dependencies.
 
 ## Technologies
 
@@ -45,10 +51,10 @@ All services communicate through the Docker Compose network.
 - ASP.NET Core
 - Docker
 - Docker Compose
+- Docker Hub
 - Microsoft SQL Server 2022
 - Seq
 - Git and GitHub
-- Docker Hub
 
 ## Project structure
 
@@ -72,6 +78,28 @@ eShop/
 - Docker Compose
 - Git
 
+You do not need the .NET SDK to run the published Docker images.
+
+## Docker Hub images
+
+The project maintains two reusable application images:
+
+| Service | Docker Hub image |
+|---|---|
+| Web MVC | [egamor/eshopwebmvc](https://hub.docker.com/r/egamor/eshopwebmvc) |
+| Public API | [egamor/eshoppublicapi](https://hub.docker.com/r/egamor/eshoppublicapi) |
+
+Both images are published with versioned tags:
+
+```text
+egamor/eshopwebmvc:1.0.0
+egamor/eshoppublicapi:1.0.0
+```
+
+The `latest` tag is also available for both images.
+
+SQL Server and Seq use their respective publisher-provided images.
+
 ## Configuration
 
 The application uses environment variables for local configuration.
@@ -86,35 +114,54 @@ Copy-Item .env.example .env
 
 Update `.env` with your own passwords and configuration.
 
-The `.env` file is excluded from Git to prevent credentials from being committed.
+The `.env` file is excluded from Git to prevent credentials from being committed. Only `.env.example`, containing placeholder values, is committed.
 
 ## Running the application
 
-### 1. Build the application images
+### 1. Clone the repository
 
 ```powershell
-docker compose build
+git clone <YOUR_GITHUB_REPOSITORY_URL>
+cd <YOUR_REPOSITORY_FOLDER>
 ```
 
-### 2. Start all services
+### 2. Configure environment variables
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Edit `.env` and provide your own configuration.
+
+### 3. Pull the application images
+
+```powershell
+docker compose pull
+```
+
+Docker Compose downloads the Web MVC and Public API images from Docker Hub.
+
+### 4. Start all services
 
 ```powershell
 docker compose up -d
 ```
 
-### 3. Check service status
+Docker Compose starts all four services and connects them through the project network.
+
+### 5. Check service status
 
 ```powershell
 docker compose ps
 ```
 
-### 4. Access the application
+### 6. Access the application
 
 - Web application: http://localhost:5106
 - Public API: http://localhost:5200
 - Seq dashboard: http://localhost:8081
 
-### 5. Stop the application
+### 7. Stop the application
 
 ```powershell
 docker compose down
@@ -143,37 +190,7 @@ Inspect SQL Server volume:
 docker volume inspect eshop_sqlserver-data
 ```
 
-**Important:** Avoid `docker compose down -v` unless you intentionally want to delete the persistent data.
-
-## Container images
-
-The project maintains two application images:
-
-| Image | Description |
-|---|---|
-| `eshopwebmvc` | E-commerce frontend |
-| `eshoppublicapi` | Backend API |
-
-SQL Server and Seq use their respective official images.
-
-### Build images locally
-
-```powershell
-docker compose build eshopwebmvc eshoppublicapi
-```
-
-### Docker Hub publication
-
-The application images will be published to Docker Hub using versioned tags.
-
-Planned image references:
-
-```text
-<DOCKERHUB_USERNAME>/eshopwebmvc:1.0.0
-<DOCKERHUB_USERNAME>/eshoppublicapi:1.0.0
-```
-
-Once published, these images can be pulled and reused on other Docker hosts without rebuilding the application from source.
+**Important:** Avoid `docker compose down -v` unless you intentionally want to delete persistent data.
 
 ## Useful Docker commands
 
@@ -181,12 +198,17 @@ Once published, these images can be pulled and reused on other Docker hosts with
 # List running containers
 docker compose ps
 
-# View application logs
+# Pull the latest configured images
+docker compose pull
+
+# Start services
+docker compose up -d
+
+# View all service logs
 docker compose logs -f
 
 # View individual service logs
 docker compose logs -f eshopwebmvc
-
 docker compose logs -f eshoppublicapi
 
 # Restart services
@@ -198,3 +220,41 @@ docker images
 # List persistent volumes
 docker volume ls
 ```
+
+## Image versioning and updates
+
+The application images are independently versioned and published to Docker Hub.
+
+To deploy a newer application version:
+
+1. Update the image tag in `docker-compose.yml`.
+2. Pull the updated images.
+3. Recreate the containers.
+
+```powershell
+docker compose pull
+docker compose up -d
+```
+
+This allows the application to be deployed on another Docker host without rebuilding the source code.
+
+## Future cloud deployment
+
+The next development phase is to deploy the application to Microsoft Azure.
+
+Planned components include:
+
+- Azure Container Registry or Docker Hub for container images.
+- Azure networking and private connectivity.
+- Azure-hosted application services.
+- Managed database services.
+- Terraform for Infrastructure as Code.
+- GitHub Actions for CI/CD automation.
+
+## Acknowledgements
+
+This project is based on Microsoft's eShopOnWeb reference application, maintained by [NimblePros](https://github.com/NimblePros/eShopOnWeb).
+
+The original application serves as the foundation, while this project focuses on containerization, deployment automation, and cloud infrastructure.
+
+Please retain the original project's license and copyright notices.

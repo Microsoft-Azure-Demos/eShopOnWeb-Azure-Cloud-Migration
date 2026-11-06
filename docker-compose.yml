@@ -1,28 +1,20 @@
+
 services:
   eshopwebmvc:
-    image: ${DOCKER_REGISTRY-}eshopwebmvc
-    build:
-      context: .
-      dockerfile: src/Web/Dockerfile
+    image: egamor/eshopwebmvc:1.0.0
     depends_on:
-      - "sqlserver"
+      - sqlserver
     environment:
       ConnectionStrings__CatalogConnection: "Server=sqlserver,1433;Initial Catalog=Microsoft.eShopOnWeb.CatalogDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};Trusted_Connection=false;TrustServerCertificate=true;"
       ConnectionStrings__IdentityConnection: "Server=sqlserver,1433;Initial Catalog=Microsoft.eShopOnWeb.Identity;User Id=sa;Password=${MSSQL_SA_PASSWORD};Trusted_Connection=false;TrustServerCertificate=true;"
-
 
   eshoppublicapi:
-    image: ${DOCKER_REGISTRY-}eshoppublicapi
-    build:
-      context: .
-      dockerfile: src/PublicApi/Dockerfile
+    image: egamor/eshoppublicapi:1.0.0
     depends_on:
-      - "sqlserver"
+      - sqlserver
     environment:
       ConnectionStrings__CatalogConnection: "Server=sqlserver,1433;Initial Catalog=Microsoft.eShopOnWeb.CatalogDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};Trusted_Connection=false;TrustServerCertificate=true;"
       ConnectionStrings__IdentityConnection: "Server=sqlserver,1433;Initial Catalog=Microsoft.eShopOnWeb.Identity;User Id=sa;Password=${MSSQL_SA_PASSWORD};Trusted_Connection=false;TrustServerCertificate=true;"
-
-
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -34,7 +26,6 @@ services:
     volumes:
       - sqlserver-data:/var/opt/mssql
 
-
   seq:
     image: datalust/seq:latest
     environment:
@@ -44,10 +35,8 @@ services:
       - "${SEQ_UI_HOST_PORT}:80"
       - "${SEQ_INGESTION_HOST_PORT}:5341"
     volumes:
-      - seq-data:/data 
-
+      - seq-data:/data
 
 volumes:
   seq-data:
   sqlserver-data:
-
