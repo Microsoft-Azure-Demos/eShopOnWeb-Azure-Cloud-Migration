@@ -260,3 +260,14 @@ pub/
 .devcontainer
 
 .azure
+
+@"
+
+# Local environment configuration (contains credentials)
+.env
+.env.*
+!.env.example
+"@ | Add-Content .gitignore
+
+
+

@@ -1,217 +1,227 @@
-# Microsoft eShopOnWeb ASP.NET Core Reference Application
+# eShopOnWeb – Containerized Application
 
-This Microsoft reference application is now being maintained by [NimblePros](https://nimblepros.com/).
+A containerized e-commerce application based on [NimblePros/eShopOnWeb](https://github.com/NimblePros/eShopOnWeb).
 
-If you're looking for the .NET Aspire eShop sample it's [here](https://github.com/dotnet/eShop). Microsoft also recommends the [Reliable Web App](https://learn.microsoft.com/azure/architecture/web-apps/guides/reliable-web-app/overview) patterns guidance for building web apps with enterprise app patterns.
+This project demonstrates how to package a multi-service .NET application using Docker and Docker Compose, manage configuration through environment variables, persist database data using Docker volumes, and prepare reusable images for deployment to cloud platforms such as Microsoft Azure.
 
-Sample ASP.NET Core reference application, powered by Microsoft, demonstrating a single-process (monolithic) application architecture and deployment model. If you're new to .NET development, read the [Getting Started for Beginners](https://nimblepros.github.io/eShopOnWeb/getting-started-for-beginners.html) guide.
+## Architecture
 
-A list of Frequently Asked Questions about this repository can be found [here](https://github.com/nimblepros/eShopOnWeb/wiki/Frequently-Asked-Questions).
+The application consists of four Docker services:
 
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table of Contents
+| Service | Technology | Purpose | Local access |
+|---|---|---|---|
+| Web MVC | ASP.NET Core | E-commerce frontend | http://localhost:5106 |
+| Public API | ASP.NET Core | Backend API | http://localhost:5200 |
+| Database | Microsoft SQL Server 2022 | Application data | localhost:1433 |
+| Logging | Seq | Centralized application logs | http://localhost:8081 |
 
-- [Overview Video](#overview-video)
-- [eBook](#ebook)
-- [Topics (eBook TOC)](#topics-ebook-toc)
-- [Running the sample using Azd template](#running-the-sample-using-azd-template)
-  - [Windows](#windows)
-  - [Linux/MacOS](#linuxmacos)
-- [Running the sample locally](#running-the-sample-locally)
-  - [Configuring the sample to use SQL Server](#configuring-the-sample-to-use-sql-server)
-- [Dev Containers for the eShopOnWeb repo](#dev-containers-for-the-eshoponweb-repo)
-  - [eShopOnWeb App Dev Container](#eshoponweb-app-dev-container)
-  - [eShopOnWeb Docs Dev Container](#eshoponweb-docs-dev-container)
-  - [Learn More about Dev Containers](#learn-more-about-dev-containers)
-- [Running the sample using Docker](#running-the-sample-using-docker)
-- [Getting the GitHub Single Sign-On Working](#getting-the-github-single-sign-on-working)
-- [Community Extensions](#community-extensions)
+### Architecture overview
 
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+```text
+                 Browser
+                    |
+                    v
+             Web MVC :5106
+                    |
+                    v
+             Public API :5200
+                    |
+                    v
+              SQL Server
+                 :1433
 
-## Overview Video
+          Web MVC / Public API
+                    |
+                    v
+                  Seq
+                 :5341
+```
 
-[Steve "ardalis" Smith](https://twitter.com/ardalis) recorded [a live stream providing an overview of the eShopOnWeb reference app](https://www.youtube.com/watch?v=vRZ8ucGac8M&ab_channel=Ardalis) in October 2020.
+All services communicate through the Docker Compose network.
 
-## eBook
+## Technologies
 
-This reference application is meant to support the free .PDF download ebook: [Architecting Modern Web Applications with ASP.NET Core and Azure](https://aka.ms/webappebook), updated to **ASP.NET Core 8.0**. [Also available in ePub/mobi formats](https://dotnet.microsoft.com/learn/web/aspnet-architecture).
+- .NET 10
+- ASP.NET Core
+- Docker
+- Docker Compose
+- Microsoft SQL Server 2022
+- Seq
+- Git and GitHub
+- Docker Hub
 
-You can also read the book in online pages at the .NET docs here:
-https://docs.microsoft.com/dotnet/architecture/modern-web-apps-azure/
+## Project structure
 
-[<img src="https://dotnet.microsoft.com/blob-assets/images/e-books/aspnet.png" height="300" />](https://dotnet.microsoft.com/learn/web/aspnet-architecture)
+```text
+eShop/
+├── src/
+│   ├── Web/
+│   └── PublicApi/
+├── tests/
+├── infra/
+├── docker-compose.yml
+├── docker-compose.override.yml
+├── .env.example
+├── .gitignore
+└── README.md
+```
 
-The **eShopOnWeb** sample is related to the [eShopOnContainers](https://github.com/dotnet/eShopOnContainers) sample application which, in that case, focuses on a microservices/containers-based application architecture. However, **eShopOnWeb** is much simpler in regards to its current functionality and focuses on traditional Web Application Development with a single deployment.
+## Prerequisites
 
-The goal for this sample is to demonstrate some of the principles and patterns described in the [eBook](https://aka.ms/webappebook). It is not meant to be an eCommerce reference application, and as such it does not implement many features that would be obvious and/or essential to a real eCommerce application.
+- Docker Desktop
+- Docker Compose
+- Git
 
-> ### VERSIONS
-> #### The `main` branch is currently running ASP.NET Core 10.0.
-> #### Older versions are tagged.
+## Configuration
 
-## Topics (eBook TOC)
+The application uses environment variables for local configuration.
 
-- Introduction
-- Characteristics of Modern Web Applications
-- Choosing Between Traditional Web Apps and SPAs
-- Architectural Principles
-- Common Web Application Architectures
-- Common Client Side Technologies
-- Developing ASP.NET Core MVC Apps
-- Working with Data in ASP.NET Core Apps
-- Testing ASP.NET Core MVC Apps
-- Development Process for Azure-Hosted ASP.NET Core Apps
-- Azure Hosting Recommendations for ASP.NET Core Web Apps
+Create your local environment file:
 
-## Running the sample using Azd template
-
-The store's home page should look like this:
-
-![eShopOnWeb home page screenshot](https://user-images.githubusercontent.com/782127/88414268-92d83a00-cdaa-11ea-9b4c-db67d95be039.png)
-
-The Azure Developer CLI (`azd`) is a developer-centric command-line interface (CLI) tool for creating Azure applications.
-
-You need to install it before running and deploying with Azure Developer CLI.
-
-### Windows
+**PowerShell:**
 
 ```powershell
-powershell -ex AllSigned -c "Invoke-RestMethod 'https://aka.ms/install-azd.ps1' | Invoke-Expression"
+Copy-Item .env.example .env
 ```
 
-### Linux/MacOS
+Update `.env` with your own passwords and configuration.
 
-```
-curl -fsSL https://aka.ms/install-azd.sh | bash
-```
+The `.env` file is excluded from Git to prevent credentials from being committed.
 
-And you can also install with package managers, like winget, choco, and brew. For more details, you can follow the documentation: https://aka.ms/azure-dev/install.
+## Running the application
 
-After logging in with the following command, you will be able to use the azd cli to quickly provision and deploy the application.
+### 1. Build the application images
 
-```
-azd auth login
+```powershell
+docker compose build
 ```
 
-Then, execute the `azd init` command to initialize the environment.
-```
-azd init -t NimblePros/eShopOnWeb
-```
+### 2. Start all services
 
-Run `azd up` to provision all the resources to Azure and deploy the code to those resources.
-```
-azd up
+```powershell
+docker compose up -d
 ```
 
-According to the prompt, enter an `env name`, and select `subscription` and `location`, these are the necessary parameters when you create resources. Wait a moment for the resource deployment to complete, click the web endpoint and you will see the home page.
+### 3. Check service status
 
-**Notes:**
-1. Considering security, we store its related data (id, password) in the **Azure Key Vault** when we create the database, and obtain it from the Key Vault when we use it. This is different from directly deploying applications locally.
-2. The resource group name created in azure portal will be **rg-{env name}**.
-
-You can also run the sample directly locally (See below).
-
-## Running the sample locally
-Most of the site's functionality works with just the web application running. However, the site's Admin page relies on Blazor WebAssembly running in the browser, and it must communicate with the server using the site's PublicApi web application. You'll need to also run this project. You can configure Visual Studio to start multiple projects, or just go to the PublicApi folder in a terminal window and run `dotnet run` from there. After that from the Web folder you should run `dotnet run --launch-profile https`. Now you should be able to browse to `https://localhost:5001/`. The admin part in Blazor is accessible to `https://localhost:5001/admin`
-
-Note that if you use this approach, you'll need to stop the application manually in order to build the solution (otherwise you'll get file locking errors).
-
-After cloning or downloading the sample you must setup your database.
-To use the sample with a persistent database, you will need to run its Entity Framework Core migrations before you will be able to run the app.
-
-You can also run the samples in Docker (see below).
-
-### Configuring the sample to use SQL Server
-
-1. By default, the project uses a real database. If you want an in memory database, you can add in the `appsettings.json` file in the Web folder
-
-    ```json
-   {
-       "UseOnlyInMemoryDatabase": true
-   }
-    ```
-
-1. Ensure your connection strings in `appsettings.json` point to a local SQL Server instance.
-1. Ensure the tool EF was already installed. You can find some help [here](https://docs.microsoft.com/ef/core/miscellaneous/cli/dotnet)
-
-    ```
-    dotnet tool update --global dotnet-ef
-    ```
-
-1. Open a command prompt in the Web folder and execute the following commands:
-
-    ```
-    dotnet restore
-    dotnet tool restore
-    dotnet ef database update -c catalogcontext -p ../Infrastructure/Infrastructure.csproj -s Web.csproj
-    dotnet ef database update -c appidentitydbcontext -p ../Infrastructure/Infrastructure.csproj -s Web.csproj
-    ```
-
-    These commands will create two separate databases, one for the store's catalog data and shopping cart information, and one for the app's user credentials and identity data.
-
-1. Run the application.
-
-    The first time you run the application, it will seed both databases with data such that you should see products in the store, and you should be able to log in using the demouser@microsoft.com account.
-
-    Note: If you need to create migrations, you can use these commands:
-
-    ```
-    -- create migration (from Web folder CLI)
-    dotnet ef migrations add InitialModel --context catalogcontext -p ../Infrastructure/Infrastructure.csproj -s Web.csproj -o Data/Migrations
-
-    dotnet ef migrations add InitialIdentityModel --context appidentitydbcontext -p ../Infrastructure/Infrastructure.csproj -s Web.csproj -o Identity/Migrations
-    ```
-
-## Dev Containers for the eShopOnWeb repo
-
-We use dev containers to make it easier for you to run the eShopOnWeb application locally as well as our documentation.
-
-### eShopOnWeb App Dev Container
-
-This project includes a `.devcontainer` folder with a [dev container configuration](https://containers.dev/), which lets you use a container as a full-featured dev environment.
-
-You can use the dev container to build and run the app without needing to install any of its tools locally! You can work in GitHub Codespaces or the VS Code Dev Containers extension.
-
-Learn more about using the dev container in [eShopOnWeb's dev container readme](/.devcontainer/devcontainerreadme.md).
-
-### eShopOnWeb Docs Dev Container
-
-If you want to help maintain [the documentation](https://nimblepros.github.io/eShopOnWeb/), we have a [.devcontainer folder within the docs folder](/docs/.devcontainer). This allows us to see our documentation changes in a container running Ruby and the GitHub Pages environment.
-
-### Learn More about Dev Containers
-
-- [NimblePros YouTube: Run GitHub Pages Locally in a Dev Container](https://www.youtube.com/watch?v=JpLJi5JBmYM&t=5s)
-- [NimblePros Blog: Run GitHub Pages Locally in a Dev Container](https://blog.nimblepros.com/blogs/github-pages-with-dev-containers/)
-- [NimblePros Blog: Introduction to Dev Containers](https://blog.nimblepros.com/blogs/introduction-to-dev-containers/)
-- [NimblePros Webinar: Dev Containers Unwrapped!](https://www.youtube.com/watch?v=Wvetp2YkwPY)
-
-## Running the sample using Docker
-
-You can run the Web sample by running these commands from the root folder (where the .sln file is located):
-
-```
-docker-compose build
-docker-compose up
+```powershell
+docker compose ps
 ```
 
-You should be able to make requests to localhost:5106 for the Web project, and localhost:5200 for the Public API project once these commands complete. If you have any problems, especially with login, try from a new guest or incognito browser instance.
+### 4. Access the application
 
-You can also run the applications by using the instructions located in their `Dockerfile` file in the root of each project. Again, run these commands from the root of the solution (where the .sln file is located).
+- Web application: http://localhost:5106
+- Public API: http://localhost:5200
+- Seq dashboard: http://localhost:8081
 
-## Getting the GitHub Single Sign-On Working
+### 5. Stop the application
 
-We include GitHub as our external provider for single sign-on.
+```powershell
+docker compose down
+```
 
-To get it running locally, you'll want to register an application in GitHub and store values in user secrets for the client ID and client secret.
+This stops and removes the containers but preserves named volumes.
 
-We explain the code in detail in our course on [ASP.NET Identity in Action: Implementing Individual Accounts](https://academy.nimblepros.com/p/applying-identity-to-asp-net).
+## Persistent storage
 
-## Community Extensions
+SQL Server and Seq use Docker named volumes to preserve data independently of container lifecycles.
 
-We have some great contributions from the community, and while these aren't maintained by Microsoft we still want to highlight them.
+| Volume | Purpose |
+|---|---|
+| `eshop_sqlserver-data` | SQL Server database files |
+| `eshop_seq-data` | Seq persistent data |
 
-[eShopOnWeb VB.NET](https://github.com/VBAndCs/eShopOnWeb_VB.NET) by Mohammad Hamdy Ghanem
+List volumes:
 
-[FShopOnWeb](https://github.com/NitroDevs/FShopOnWeb) An F# take on eShopOnWeb by Sean G. Wright and Kyle McMaster
+```powershell
+docker volume ls
+```
+
+Inspect SQL Server volume:
+
+```powershell
+docker volume inspect eshop_sqlserver-data
+```
+
+**Important:** Avoid `docker compose down -v` unless you intentionally want to delete the persistent data.
+
+## Container images
+
+The project maintains two application images:
+
+| Image | Description |
+|---|---|
+| `eshopwebmvc` | E-commerce frontend |
+| `eshoppublicapi` | Backend API |
+
+SQL Server and Seq use their respective official images.
+
+### Build images locally
+
+```powershell
+docker compose build eshopwebmvc eshoppublicapi
+```
+
+### Docker Hub publication
+
+The application images will be published to Docker Hub using versioned tags.
+
+Planned image references:
+
+```text
+<DOCKERHUB_USERNAME>/eshopwebmvc:1.0.0
+<DOCKERHUB_USERNAME>/eshoppublicapi:1.0.0
+```
+
+Once published, these images can be pulled and reused on other Docker hosts without rebuilding the application from source.
+
+## Useful Docker commands
+
+```powershell
+# List running containers
+docker compose ps
+
+# View application logs
+docker compose logs -f
+
+# View individual service logs
+docker compose logs -f eshopwebmvc
+
+docker compose logs -f eshoppublicapi
+
+# Restart services
+docker compose restart
+
+# List local images
+docker images
+
+# List persistent volumes
+docker volume ls
+```
+
+## Future development
+
+The next development milestones are:
+
+1. Publish reusable application images to Docker Hub.
+2. Publish the source code to GitHub.
+3. Update Docker Compose to pull the published images.
+4. Deploy the application to Microsoft Azure.
+5. Automate infrastructure provisioning using Terraform.
+6. Implement CI/CD pipelines for automated image builds and deployments.
+
+## Learning objectives
+
+This project is part of a practical Cloud and DevOps portfolio, focusing on:
+
+- Containerization of multi-service applications.
+- Docker networking and service discovery.
+- Persistent storage and database management.
+- Environment-based configuration and secrets management.
+- Reusable container images and image versioning.
+- Cloud deployment and Infrastructure as Code.
+- CI/CD automation.
+
+---
+
+**Project status:** Local Docker Compose environment running successfully. Docker Hub publication and GitHub release are the next milestones.

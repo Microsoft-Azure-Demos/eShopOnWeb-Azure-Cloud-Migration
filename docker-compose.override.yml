@@ -1,20 +1,25 @@
-version: '3.4'
+# docker-compose.override.yml
 services:
- eshopwebmvc:
-   environment:
-     - ASPNETCORE_ENVIRONMENT=Docker
-     - ASPNETCORE_URLS=http://+:8080
-   ports:
-     - "5106:8080"
-   volumes:
-     - ~/.aspnet/https:/root/.aspnet/https:ro
-     - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
- eshoppublicapi:
-   environment:
-     - ASPNETCORE_ENVIRONMENT=Docker
-     - ASPNETCORE_URLS=http://+:8080
-   ports:
-     - "5200:8080"
-   volumes:
-     - ~/.aspnet/https:/root/.aspnet/https:ro
-     - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
+  eshopwebmvc:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ASPNETCORE_URLS: http://+:8080
+      Aspire__Seq__ServerUrl: http://seq:5341
+      baseUrls__apiBase: http://eshoppublicapi:8080/api/
+    ports:
+      - "${WEB_HOST_PORT}:8080"
+    volumes:
+      - ~/.aspnet/https:/root/.aspnet/https:ro
+      - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
+
+  eshoppublicapi:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ASPNETCORE_URLS: http://+:8080
+      Seq__ServerUrl: http://seq:5341
+      baseUrls__webBase: "http://host.docker.internal:${WEB_HOST_PORT}/"
+    ports:
+      - "${API_HOST_PORT}:8080"
+    volumes:
+      - ~/.aspnet/https:/root/.aspnet/https:ro
+      - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro
