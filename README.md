@@ -121,8 +121,8 @@ The `.env` file is excluded from Git to prevent credentials from being committed
 ### 1. Clone the repository
 
 ```powershell
-git clone <YOUR_GITHUB_REPOSITORY_URL>
-cd <YOUR_REPOSITORY_FOLDER>
+git clone git@github.com:Microsoft-Azure-Demos/eShopOnWeb-Containerized-Application.git
+cd eShopOnWeb-Containerized-Application
 ```
 
 ### 2. Configure environment variables
