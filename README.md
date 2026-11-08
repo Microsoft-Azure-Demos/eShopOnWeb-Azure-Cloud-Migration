@@ -109,7 +109,8 @@ The migration was validated through the following tests:
 ## Related Project
 
 **Standalone / On-Premises Deployment:**  
-[Link to the standalone GitHub repository]
+[(https://github.com/Microsoft-Azure-Demos/eShopOnWeb-Containerized-Application)]
+
 
 ## License
 
