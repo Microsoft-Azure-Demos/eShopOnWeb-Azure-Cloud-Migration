@@ -86,8 +86,16 @@ builder.Services.Configure<ServiceConfig>(config =>
 
 builder.Services.AddBlazor(builder.Configuration);
 
+
 builder.Services.AddMetronome();
-builder.AddSeqEndpoint(connectionName: "seq");
+// only execute this code when running in development or docker environment
+// skip this code when running in production environment
+if (builder.Environment.IsDevelopment() ||
+    builder.Environment.IsEnvironment("Docker"))
+{
+    builder.AddSeqEndpoint(connectionName: "seq");
+}
+
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 

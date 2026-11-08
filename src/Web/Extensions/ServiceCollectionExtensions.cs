@@ -1,4 +1,4 @@
-﻿using Azure.Identity;
+﻿//using Azure.Identity;
 using BlazorAdmin;
 using BlazorAdmin.Services;
 using Blazored.LocalStorage;
@@ -22,25 +22,30 @@ public static class ServiceCollectionExtensions
             // Configure SQL Server (local)
             services.ConfigureLocalDatabaseContexts(configuration);
         }
+
         else
         {
-            // Configure SQL Server (prod)
-            var credential = new ChainedTokenCredential(new AzureDeveloperCliCredential(), new DefaultAzureCredential());
-            configuration.AddAzureKeyVault(new Uri(configuration["AZURE_KEY_VAULT_ENDPOINT"] ?? ""), credential);
-
+            // Configure Azure SQL using App Service Managed Identity
             services.AddDbContext<CatalogContext>((provider, options) =>
             {
-                var connectionString = configuration[configuration["AZURE_SQL_CATALOG_CONNECTION_STRING_KEY"] ?? ""];
-                options.UseSqlServer(connectionString, sqlOptions => sqlOptions.EnableRetryOnFailure())
-                .AddInterceptors(provider.GetRequiredService<DbCallCountingInterceptor>());
+                var connectionString = configuration.GetConnectionString("CatalogConnection");
+
+                options.UseSqlServer(connectionString, sqlOptions =>
+                    sqlOptions.EnableRetryOnFailure())
+                    .AddInterceptors(provider.GetRequiredService<DbCallCountingInterceptor>());
             });
-            services.AddDbContext<AppIdentityDbContext>((provider,options) =>
+
+            services.AddDbContext<AppIdentityDbContext>((provider, options) =>
             {
-                var connectionString = configuration[configuration["AZURE_SQL_IDENTITY_CONNECTION_STRING_KEY"] ?? ""];
-                options.UseSqlServer(connectionString, sqlOptions => sqlOptions.EnableRetryOnFailure())
-                                .AddInterceptors(provider.GetRequiredService<DbCallCountingInterceptor>());
+                var connectionString = configuration.GetConnectionString("IdentityConnection");
+
+                options.UseSqlServer(connectionString, sqlOptions =>
+                    sqlOptions.EnableRetryOnFailure())
+                    .AddInterceptors(provider.GetRequiredService<DbCallCountingInterceptor>());
             });
         }
+
+       
     }
 
     public static void AddCookieAuthentication(this IServiceCollection services)
