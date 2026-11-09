@@ -1,9 +1,21 @@
-﻿<!DOCTYPE html>
+﻿@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+<!DOCTYPE html>
+@{
+    var imageBaseUrl = (Configuration["ImageBaseUrl"] ?? "").TrimEnd('/');
+}
 <html>
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Microsoft.eShopOnWeb</title>
+    <title> @ViewData["Title"] - Microsoft.eShopOnWeb</title>
+        <style>
+            :root {
+                --catalog-banner-image: url('@imageBaseUrl/images/main_banner.png');
+                --catalog-arrow-image: url('@imageBaseUrl/images/arrow-down.png');
+            }
+        </style>
+        
+       
     <environment names="Development,Docker">
         <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
         <link rel="stylesheet" href="~/css/app.css" />
@@ -30,7 +42,7 @@
                 <article class="row">
                     <section class="col-lg-7 col-md-6 col-xs-12">
                         <a asp-area="" asp-page="/Index">
-                            <img src="~/images/brand.png" alt="eShop On Web" />
+                            <img src="@($"{imageBaseUrl}/images/brand.png")" alt="eShop On Web" />
                         </a>
                     </section>
                     <partial name="_LoginPartial" />
